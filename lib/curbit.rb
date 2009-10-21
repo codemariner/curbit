@@ -1,8 +1,10 @@
 module Curbit
   module Controller
+
     def self.included(controller)
       controller.extend ClassMethods
     end
+
     module ClassMethods
 
       # Establishes a before filter for the specified method that will limit
