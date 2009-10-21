@@ -34,7 +34,7 @@ module Curbit
       #     # validate code
       #   end
       #
-      #   rate_limit :validate, :key => Proc.new {|request, params, controller|
+      #   rate_limit :validate, :key => Proc.new {
       #                                 key = params[:email].downcase if params[:email]
       #                               },
       #                        :max_calls => 10,
@@ -71,11 +71,10 @@ module Curbit
     def rate_limit_filter(method, opts)
       key = get_key(opts[:key])
       if (key == nil)
-        Rails.logger.warn("no key value to use for rate limiting #{self.class.name}##{method}")
         return true
       end
 
-      key = "rate_limit_#{key}"
+      key = "curbit_rate_limit_key_#{key}"
 
       val = Rails.cache.read(key)
 
@@ -100,6 +99,17 @@ module Curbit
           if val[:count] > opts[:max_calls]
             val[:started_waiting] = Time.now
             Rails.cache.write(key, val, :expires_in => opts[:wait_time])
+
+            message = opts[:message]
+            if message
+              if message.is_a? Proc
+                respond_to do |format|
+                  message.call(format)
+                end
+              elsif message.is_a? String
+              end
+            end
+
             render opts[:render_format] => opts[:message]
             return false
           else
