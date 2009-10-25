@@ -1,10 +1,12 @@
 LICENSE
+Manifest
 README.rdoc
 Rakefile
+curbit.gemspec
+init.rb
 lib/curbit.rb
 test/custom_key_controller_test.rb
 test/custom_message_format_controller.rb
 test/standard_controller_test.rb
 test/test_helper.rb
 test/test_rails_helper.rb
-Manifest

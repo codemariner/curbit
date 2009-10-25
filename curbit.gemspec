@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description = %q{Application level rate limiting for Rails}
   s.email = %q{ssayles@users.sourceforge.net}
   s.extra_rdoc_files = ["LICENSE", "README.rdoc", "lib/curbit.rb"]
-  s.files = ["LICENSE", "README.rdoc", "Rakefile", "lib/curbit.rb", "test/custom_key_controller_test.rb", "test/custom_message_format_controller.rb", "test/standard_controller_test.rb", "test/test_helper.rb", "test/test_rails_helper.rb", "Manifest", "curbit.gemspec"]
+  s.files = ["LICENSE", "README.rdoc", "Rakefile", "init.rb", "lib/curbit.rb", "test/custom_key_controller_test.rb", "test/custom_message_format_controller.rb", "test/standard_controller_test.rb", "test/test_helper.rb", "test/test_rails_helper.rb", "Manifest", "curbit.gemspec"]
   s.homepage = %q{http://github.com/ssayles/curbit}
   s.rdoc_options = ["--line-numbers", "--inline-source", "--title", "Curbit", "--main", "README.rdoc"]
   s.require_paths = ["lib"]
