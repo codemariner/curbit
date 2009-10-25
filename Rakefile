@@ -1,30 +1,19 @@
 require 'rubygems'
 require 'rake'
-require 'echoe'
 
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "curbit"
-    gem.summary = %Q{Rails plugin for application level rate limiting}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.summary = %Q{Rate limiting for Rails action controllers.}
+    gem.description = %Q{Rate limiting for Rails action controllers.}
     gem.email = "ssayles@users.sourceforge.net"
     gem.homepage = "http://github.com/ssayles/curbit"
     gem.authors = ["Scott Sayles"]
     gem.add_development_dependency "thoughtbot-shoulda"
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
 rescue LoadError
   puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
-end
-
-Echoe.new('curbit', '0.1.0') do |p|
-  p.description = "Application level rate limiting for Rails"
-  p.url = "http://github.com/ssayles/curbit"
-  p.author = "Scott Sayles"
-  p.email = "ssayles@users.sourceforge.net"
-  p.ignore_pattern = ["tmp/*"]
-  #p.develoment_dependencies = []
 end
 
 require 'rake/testtask'
