@@ -1,5 +1,30 @@
-= curbit
+= CurbIt
 Rails plugin for application level rate limiting.
+
+Properly defending your app against DoS attacks or other malicious client
+behavior should always start by configuring rate limiting and throttling
+at the firewall, load balancers, reverse proxies, etc.  However, sometimes
+this just isn't enough.  Sometimes you need to rate limit requests from
+users based on some application logic that just is not practical to get to
+from those services.
+
+CurbIt provides a controller-intended "macro" for configuring rate
+limiting.  With CurbIt, you're able to customize messages, wait times, maximum
+number of calls, and provides callbacks into your application.
+
+== Requirements
++Rails > 2.0
++memcached or other compatible caching support in Rails.  CurbIt has to store
+information about requests and assumes your cache implementation will be
+able to take a call like:
+
+  Rails.cache.write(key, value, :expires_in => wait_time)
+
+That's it!
+
+
+== Examples
+
 
 == Copyright
 
