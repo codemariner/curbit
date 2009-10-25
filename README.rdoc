@@ -16,8 +16,8 @@ to get to or replicate in those services.
 === Minimal configuration
 
 Quick setup inside your Rails controller.  ActionController::Base is
-already extended to include Curbit.  This will add a rate_limit "macro" to
-your controllers.
+already extended to include Curbit when installed as a plugin.  This
+will add a rate_limit "macro" to your controllers.
 
   class InvitesController < ApplicationController
     def invite
@@ -125,14 +125,14 @@ method.  This will ignore any :status argument set in the cofig options.
 
 === Gem install
 
-  $ gem install curbit --source http://gems.github.com
+  $ gem install curbit --source http://gemcutter.org
 
 === Rails dependency
 Specify the gem dependency in your config/environment.rb file:
 
   Rails::Initializer.run do |config|
     #...
-    config.gem "curbit", :source => "http://gems.github.com"
+    config.gem "curbit", :source => "http://gemcutter.org
     #...
   end
 
@@ -141,9 +141,19 @@ Then:
   $ rake gems:install
   $ rake gems:unpack
 
+Then include in your controllers:
+
+  class MyController < ApplicationController
+    include Curbit::Controller
+    #...
+  end
+
 == As a Plugin
 
   $ script/plugin install git://github.com/ssayles/curbit.git
+
+Curbit::Controller will automatically be added to your controllers so you
+can call the rate_limit macro whenever you want.
 
 = Requirements
 * Rails >= 2.0
