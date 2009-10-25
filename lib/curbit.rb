@@ -176,7 +176,7 @@ module Curbit
           render_curbit_message(message, opts)
         end
       else
-        message = "Too many requests within the allowed time.  Please wait #{opts[:wait_time]} before submitting your request again."
+        message = "Too many requests within the allowed time.  Please wait #{opts[:wait_time]} seconds before submitting your request again."
         render_curbit_message(message, opts)
       end
     end
