@@ -1,55 +1,59 @@
 module Curbit
   module Controller
 
+    CacheKeyPrefix = "crl_key"
+
     def self.included(controller)
       controller.extend ClassMethods
     end
 
     module ClassMethods
 
+
       # Establishes a before filter for the specified method that will limit
       # calls to it based on the given options:
       #
       # ==== Options
-      # * +key+ - A symbol representing an instance method or Proc that will return the key used to identify calls. This is what is used to destinguish one call from another. If not specified, the client ip derived from the request will be used.  This will check for a HTTP_X_FORWARDED_FOR header first before using <tt>request.remote_addr</tt>.
+        # * +key+ - A symbol representing an instance method or Proc that will return the key used to identify calls. This is what is used to destinguish one call from another. If not specified, the client ip derived from the request will be used.  This will check for a HTTP_X_FORWARDED_FOR header first before using <tt>request.remote_addr</tt>.  The Proc will be passed the controller instance as it is out of scope when the Proc is initially created (so you can get at request, params, etc.).
       # * +max_calls+ - maximum number of calls allowed. Required.
       # * +time_limit+ - only :max_calls will be allowed within the specific time frame (in seconds).  If :max_calls is reached within this time, the call will be halted. Required.
       # * +wait_time+ - The time to wait if :max_calls has been reached before being able to pass.
-      # * +message+ - The message to render to the client if the call is being limited.
+      # * +message+ - The message to render to the client if the call is being limited.  The message will be rendered as a correspondingly formatted response with a default status if given a String.  If the argument is a symbol, a method with the same name will be invoked with the specified wait_time (in seconds).  The called method should take care of rendering the response.
       # * +status+ - The response status to set when the call is being limited.
-      # * +render_format+ - The render format (e.g. :html, :json, :xml) for the message that will be returned on a limited call.
       #
       # ==== Examples
-      #   rate_limit :invites, :key => :user_id, :max_calls => 5, :time_limit => 1.minute, :wait_time => 30.seconds
-      #
-      #   def user_id
-      #     session[:user_id]
-      #   end
-      #
-      # Example:
       # 
       # class InviteController < ApplicationController
       #   
-      #   include Zap::Service
+      #   include Curbit::Controller
       #
       #   def validate
       #     # validate code
       #   end
       #
-      #   rate_limit :validate, :key => Proc.new {
-      #                                 key = params[:email].downcase if params[:email]
-      #                               },
-      #                        :max_calls => 10,
-      #                        :time_limit => 1.minute,
+      #   rate_limit :validate, :max_calls => 10,
+      #                         :time_limit => 1.minute,
+      #                         :wait_time => 1.minute,
+      #                         :message => 'Too many attempts to validate your invitation code.  Please wait 1 minute before trying again.'
+      #
+      #
+      #   def invite
+      #     # invite code
+      #   end
+      #
+      #   rate_limit :invite, :key => Proc.new {session[:userid]},
+      #                        :max_calls => 2,
+      #                        :time_limit => 30.seconds,
       #                        :wait_time => 1.minute,
-      #                        :message => '{"errors": [Too many attempts to validate your invitation code.  Please wait 1 minute before trying again."]}',
-      #                        :status => 409,
-      #                        :render_format => :json
+      #                        :message => Proc.new {|format|
+      #                                                format.html {render :text => "Please wait before calling again.", :status => 409}
+      #                                                format.xml {render :xml => "<error>Please wait before calling again.</error>"}
+      #                                              }
       # end
       #
       def rate_limit(method, opts)
 
-        validate_options(opts)
+        return unless rate_limit_opts_valid?(opts)
 
         self.class_eval do
           define_method "rate_limit_#{method}" do
@@ -61,10 +65,15 @@ module Curbit
 
       private 
 
-      def validate_options(opts)
-        raise ":max_calls must be defined" unless opts[:max_calls]
-        raise ":time_limit must be defined" unless opts[:time_limit]
+      def rate_limit_opts_valid?(opts = {})
+        new_opts = {:status => 503}.merge! opts
+        opts.merge! new_opts
+        if !opts.key?(:max_calls) or !opts.key?(:time_limit) or !opts.key?(:wait_time)
+          raise ":max_calls, :time_limit, and :wait_time are required parameters"
+        end
+        true
       end
+
 
     end
 
@@ -72,13 +81,13 @@ module Curbit
 
     def rate_limit_filter(method, opts)
       key = get_key(opts[:key])
-      if (key == nil)
+      unless (key)
         return true
       end
 
-      key = "curbit_rate_limit_key_#{key}"
+      cache_key = "#{CacheKeyPrefix}_#{method}_#{key}"
 
-      val = Rails.cache.read(key)
+      val = Rails.cache.read(cache_key)
 
       if (val)
         started_at = val[:started]
@@ -89,47 +98,40 @@ module Curbit
         if started_waiting
           # did we exceed the wait time?
           if Time.now.to_i > (started_waiting.to_i + opts[:wait_time])
-            Rails.cache.delete(key)
+            Rails.cache.delete(cache_key)
             return true
           else
-            # should still wait, just fail
-            render opts[:render_format] => opts[:message]
+            get_message(opts)
             return false
           end
         elsif within_time_limit? started_at, opts[:time_limit]
           # did we exceed max calls?
           if val[:count] > opts[:max_calls]
+            # start waiting and render the message
             val[:started_waiting] = Time.now
-            Rails.cache.write(key, val, :expires_in => opts[:wait_time])
+            Rails.cache.write(cache_key, val, :expires_in => opts[:wait_time])
 
-            message = opts[:message]
-            if message
-              if message.is_a? Proc
-                respond_to do |format|
-                  message.call(format)
-                end
-              elsif message.is_a? String
-              end
-            end
+            get_message(opts)
 
-            render opts[:render_format] => opts[:message]
             return false
           else
             # just update the count
-            Rails.cache.write(key, val, :expires_in => opts[:wait_time])
+            Rails.cache.write(cache_key, val, :expires_in => opts[:wait_time])
             return true
           end
         else
           # we exceeded the time limit, so just reset
           val = {:started => Time.now, :count => 1}
-          Rails.cache.write(key, val, :expires_in => opts[:time_limit])
+          Rails.cache.write(cache_key, val, :expires_in => opts[:time_limit])
           return true
         end
       else
         val = {:started => Time.now, :count => 1}
-        Rails.cache.write(key, val, :expires_in => opts[:time_limit])
+        Rails.cache.write(cache_key, val, :expires_in => opts[:time_limit])
       end
     end
+
+    private 
 
     def within_time_limit?(started_at, limit)
       Time.now.to_i < (started_at.to_i + limit)
@@ -141,19 +143,64 @@ module Curbit
       key = nil
       if (opt)
         if opt.is_a? Proc
-          key = opt.call()
+          key = opt.call(self) # passing it the controller instance
         elsif opt.is_a? Symbol
           key = self.send(opt) if self.respond_to? opt
         end
       else
-        if request.env('HTTP_X_FORWARDED_FOR') 
-          key = request.env('HTTP_X_FORWARDED_FOR') 
+        if request.env['HTTP_X_FORWARDED_FOR'] 
+          key = request.env['HTTP_X_FORWARDED_FOR'] 
         else
-          key = request.remote_addr
+          addr = request.remote_addr
+          if (addr == "0.0.0.0" or addr == "127.0.0.1")
+            Rails.logger.warn "attempting to rate limit with a localhost address.  Ignoring."
+            return nil
+          else
+            key = addr
+          end
         end
       end
 
       key
+    end
+
+    def get_message(opts)
+      message = opts[:message]
+      if message
+        if message.is_a? Proc
+          respond_to do |format|
+            message.call(self, opts[:wait_time])
+          end
+        elsif message.is_a? Symbol
+          self.send(message, opts[:wait_time])
+        elsif message.is_a? String
+          render_curbit_message(message, opts)
+        end
+      else
+        message = "Too many requests within the allowed time.  Please wait #{opts[:wait_time]} before submitting your request again."
+        render_curbit_message(message, opts)
+      end
+    end
+
+    def render_curbit_message(message, opts)
+      rendered = false
+      respond_to {|format|
+          format.html {
+            render :text => "<html><body>#{message}</body></html>", :status => opts[:status]
+            rendered = true
+          }
+          format.json {
+            render :json => %[{"error":"#{message}"}], :status => opts[:status]
+            rendered = true
+          }
+          format.xml {
+            render :xml => "<error>#{message}</error>", :status => opts[:status]
+            rendered = true
+          }
+      }
+      if (!rendered)
+        render :text => message, :status => opts[:status]
+      end
     end
 
   end
