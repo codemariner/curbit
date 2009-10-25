@@ -2,7 +2,7 @@
 CurbIt makes it easy to add application level rate limiting to your Rails
 app by using a controller macro. 
 
-= What CurbIt is NOT
+== What CurbIt is NOT
 CurbIt is NOT a replacement for properly configured rate limiting at
 fronting services.  Properly defending your app against DoS attacks or
 other malicious client behavior should always include configuring rate
@@ -138,12 +138,13 @@ Then:
   $ rake gems:install
   $ rake gems:unpack
 
+== As a Plugin
+
+  $ script/plugin install git://github.com/ssayles/curbit.git
 
 = Requirements
 * Rails >= 2.0
-* memcached or other compatible caching support in Rails.  CurbIt has to store
-information about requests and assumes your cache implementation will be
-able to take calls like:
+* memcached or other compatible caching support in Rails.  CurbIt has to store information about requests and assumes your cache implementation will be able to take calls like:
 
   Rails.cache.write(key, value, :expires_in => wait_time)
 
