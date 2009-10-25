@@ -155,11 +155,10 @@ Then include in your controllers:
 Curbit::Controller will automatically be added to your controllers so you
 can call the rate_limit macro whenever you want.
 
-= Requirements
-* Rails >= 2.0
-* memcached or other compatible caching support in Rails.  CurbIt has to store information about requests and assumes your cache implementation will be able to take calls like:
-
-  Rails.cache.write(key, value, :expires_in => wait_time)
+= Dependencies 
+CurbIt utilizes Rails.cache to store information about requests.  Be
+mindful that if you are running a cluster, you'll want to make sure
+you're using a shared cache like memcached.
 
 That's it!
 
