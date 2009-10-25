@@ -1,7 +1,16 @@
 = CurbIt
 CurbIt makes it easy to add application level rate limiting to your Rails
-app by using a controller macro.
+app by using a controller macro. 
 
+= What CurbIt is NOT
+CurbIt is NOT a replacement for properly configured rate limiting at
+fronting services.  Properly defending your app against DoS attacks or
+other malicious client behavior should always include configuring rate
+limiting and throttling at the firewall, load balancers, reverse proxies,
+and other devices that front your app.  But sometimes that just isn't
+enough.  Sometimes you want to rate limit requests from users based on
+application logic that is not practical to get to or replicate in those
+services.
 
 = Usage
 
@@ -104,20 +113,13 @@ Here, CurbIt will relinquish all control for response rendering to your
 method.  This will ignore any :status argument set in the cofig options.
 
 === Default response bodies
-* xml: <error>#{message}</error>
-* json: {"error":{#{message}}}
-* html: #{message}
-* text: #{message}
+* xml: <error>message</error>
+* json: {"error":{"message"}}
+* html: message
+* text: message
 
 
-== What CurbIt is NOT
-CurbIt is NOT a replacement for properly configured rate limiting at
-fronting services.  Properly defending your app against DoS attacks or
-other malicious client behavior should always include configuring rate
-limiting and throttling at the firewall, load balancers, reverse proxies,
-and other devices.  But sometimes that just isn't enough.  Sometimes
-you want to rate limit requests from users based on application logic
-that is not practical to get to or replicate in those services. 
+
 
 = Rails Installation
 
@@ -138,10 +140,10 @@ Then:
 
 
 = Requirements
-*Rails >= 2.0
-*memcached or other compatible caching support in Rails.  CurbIt has to store
+* Rails >= 2.0
+* memcached or other compatible caching support in Rails.  CurbIt has to store
 information about requests and assumes your cache implementation will be
-able to take a call like:
+able to take calls like:
 
   Rails.cache.write(key, value, :expires_in => wait_time)
 
