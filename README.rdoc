@@ -11,41 +11,41 @@ Quick setup inside your Rails controller.  ActionController::Base is
 already extended to include Curbit.
 
   class InvitesController < ApplicationController
-     def invite
-       # ... invite logic
-     end
+    def invite
+      # invite logic...
+    end
 
-     rate_limit :invite, :max_calls => 2, :time_limit => 30.seconds, :wait_time => 1.minute
+    rate_limit :invite, :max_calls => 2, :time_limit => 30.seconds, :wait_time => 1.minute
   end
 
 If a user calls the invite service from the same remote address more than
 2 times within 30 seconds, CurbIt will render a '503 Service Unavailable'
-response and the invite method is never called.  Default response messages
-for html, xml, and json formats are rendered as required.
+response and the invite method is never called.  The user will then need
+to wait 1 minute before being allowed to make the request again.
+Default response messages for html, xml, and json formats are rendered as required.
 
 === Custom client identifier
 
-If you don't want to use the remote client address to identify the client,
-you can specify a method that CurbIt will call to get the key from.
+If you don't want to use the remote address to identify the client,
+you can specify a method that CurbIt will call to get a key from.
 
   class InvitesController < ApplicationController
-     def invite
-       # ... invite logic
-     end
+    def invite
+      # invite logic...
+    end
 
-     rate_limit :invite, :key => :userid, :max_calls => 2,
-                         :time_limit => 30.seconds, :wait_time => 1.minute
-
-     def userid
-       session[:user_id]
-     end
+    rate_limit :invite, :key => :userid, :max_calls => 2,
+                        :time_limit => 30.seconds, :wait_time => 1.minute
+    def userid
+      session[:user_id]
+    end
   end
 
-CurbIt will call the :userid method and will use the returned value to
+CurbIt will call the :userid method and use the returned value to
 create a unique identifier.  This identifier is used to index cached
 information about the request.
 
-You can also alternatively pass a Proc that will take the controller
+You can alternatively pass a Proc that will take the controller
 instance as an argument.  
 
      rate_limit :invite, :key => proc {|c| c.session[:user_id]},
@@ -61,17 +61,18 @@ defined.  This way, you can at least have access to stuff you might need.)
 You might like to customize the messages returned by CurbIt.
 
   class InvitesController < ApplicationController
-     def invite
-       # ... invite logic
-     end
+    def invite
+      # invite logic...
+    end
 
-     rate_limit :invite, :max_calls => 2, :time_limit => 30.seconds, :wait_time => 1.minute,
-                         :message => "Hey! Slow down there cow polk.",
-                         :status => 200
+    rate_limit :invite, :max_calls => 2, :time_limit => 30.seconds, :wait_time => 1.minute,
+                        :message => "Hey! Slow down there cow polk.",
+                        :status => 200
   end
 
 After reaching the maximum threshold of requests, CurbIt will render the
 message "Hey! Slow down there cow polk." with a response status of 200.
+If :status is not defined, CurbIt will set a 503 status on the response.
 CurbIt will also embed this message into some default json or xml
 containers based on the request format.
 
@@ -82,7 +83,7 @@ customize the response rendering.
 
   class InvitesController < ApplicationController
     def invite
-      # ... invite logic
+      # invite logic...
     end
 
     rate_limit :invite, :max_calls => 2, :time_limit => 30.seconds, :wait_time => 1.minute,
@@ -102,19 +103,43 @@ customize the response rendering.
 Here, CurbIt will relinquish all control for response rendering to your
 method.  This will ignore any :status argument set in the cofig options.
 
-=== What CurbIt is NOT
+=== Default response bodies
+* xml: <error>#{message}</error>
+* json: {"error":{#{message}}}
+* html: #{message}
+* text: #{message}
+
+
+== What CurbIt is NOT
 CurbIt is NOT a replacement for properly configured rate limiting at
 fronting services.  Properly defending your app against DoS attacks or
 other malicious client behavior should always include configuring rate
 limiting and throttling at the firewall, load balancers, reverse proxies,
-and other devices.  However, sometimes this just isn't enough.  Sometimes
+and other devices.  But sometimes that just isn't enough.  Sometimes
 you want to rate limit requests from users based on application logic
-that is just not practical to get to or replicate in those services. 
+that is not practical to get to or replicate in those services. 
+
+= Rails Installation
+
+== As a Gem
+
+Specify the gem dependency in your config/environment.rb file:
+
+  Rails::Initializer.run do |config|
+    #...
+    config.gem "curbit", :source => "http://gems.github.com"
+    #...
+  end
+
+Then:
+
+  $ rake gems:install
+  $ rake gems:unpack
 
 
-== Requirements
-+Rails > 2.0
-+memcached or other compatible caching support in Rails.  CurbIt has to store
+= Requirements
+*Rails >= 2.0
+*memcached or other compatible caching support in Rails.  CurbIt has to store
 information about requests and assumes your cache implementation will be
 able to take a call like:
 
@@ -122,8 +147,10 @@ able to take a call like:
 
 That's it!
 
+= Credits
 
+CurbIt is written and maintained by {Scott Sayles}[mailto:ssayles@users.sourceforge.net].  
 
-== Copyright
+= Copyright
 
 Copyright (c) 2009 Scott Sayles. See LICENSE for details.
