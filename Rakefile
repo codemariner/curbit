@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'rake'
+require 'echoe'
 
 begin
   require 'jeweler'
@@ -15,6 +16,15 @@ begin
   end
 rescue LoadError
   puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
+end
+
+Echoe.new('curbit', '0.1.0') do |p|
+  p.description = "Application level rate limiting for Rails"
+  p.url = "http://github.com/ssayles/curbit"
+  p.author = "Scott Sayles"
+  p.email = "ssayles@users.sourceforge.net"
+  p.ignore_pattern = ["tmp/*"]
+  #p.develoment_dependencies = []
 end
 
 require 'rake/testtask'

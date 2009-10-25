@@ -2,22 +2,22 @@
 CurbIt makes it easy to add application level rate limiting to your Rails
 app by using a controller macro. 
 
-== What CurbIt is NOT
 CurbIt is NOT a replacement for properly configured rate limiting at
 fronting services.  Properly defending your app against DoS attacks or
 other malicious client behavior should always include configuring rate
-limiting and throttling at the firewall, load balancers, reverse proxies,
-and other devices that front your app.  But sometimes that just isn't
-enough.  Sometimes you want to rate limit requests from users based on
-application logic that is not practical to get to or replicate in those
-services.
+limiting and throttling at the services that sit in front of your app.
+This includes firewalls, load balancers, and reverse proxies.  But
+sometimes that just isn't enough.  Sometimes you want to rate limit
+requests from users based on application logic that is not practical
+to get to or replicate in those services.
 
 = Usage
 
 === Minimal configuration
 
 Quick setup inside your Rails controller.  ActionController::Base is
-already extended to include Curbit.
+already extended to include Curbit.  This will add a rate_limit "macro" to
+your controllers.
 
   class InvitesController < ApplicationController
     def invite
@@ -119,12 +119,15 @@ method.  This will ignore any :status argument set in the cofig options.
 * text: message
 
 
-
-
 = Rails Installation
 
 == As a Gem
 
+=== Gem install
+
+  $ gem install curbit --source http://gems.github.com
+
+=== Rails dependency
 Specify the gem dependency in your config/environment.rb file:
 
   Rails::Initializer.run do |config|
