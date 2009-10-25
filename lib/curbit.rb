@@ -91,6 +91,7 @@ module Curbit
       val = Rails.cache.read(cache_key)
 
       if (val)
+        val = val.dup
         started_at = val[:started]
         count = val[:count]
         val[:count] = count + 1
