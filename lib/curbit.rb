@@ -41,14 +41,10 @@ module Curbit
       #     # invite code
       #   end
       #
-      #   rate_limit :invite, :key => Proc.new {session[:userid]},
+      #   rate_limit :invite, :key => proc {|c| c.session[:userid]},
       #                        :max_calls => 2,
       #                        :time_limit => 30.seconds,
-      #                        :wait_time => 1.minute,
-      #                        :message => Proc.new {|format|
-      #                                                format.html {render :text => "Please wait before calling again.", :status => 409}
-      #                                                format.xml {render :xml => "<error>Please wait before calling again.</error>"}
-      #                                              }
+      #                        :wait_time => 1.minute
       # end
       #
       def rate_limit(method, opts)
@@ -73,11 +69,16 @@ module Curbit
         end
         true
       end
-
-
     end
 
+
     private 
+
+    def curbit_cache_key(key, method)
+      # TODO: this won't work if there are more than one controller with
+      # the same name in the same app
+      "#{CacheKeyPrefix}_#{self.class.name}_#{method}_#{key}"
+    end
 
     def rate_limit_filter(method, opts)
       key = get_key(opts[:key])
@@ -85,7 +86,7 @@ module Curbit
         return true
       end
 
-      cache_key = "#{CacheKeyPrefix}_#{method}_#{key}"
+      cache_key = curbit_cache_key(key, method)
 
       val = Rails.cache.read(cache_key)
 
@@ -130,8 +131,6 @@ module Curbit
         Rails.cache.write(cache_key, val, :expires_in => opts[:time_limit])
       end
     end
-
-    private 
 
     def within_time_limit?(started_at, limit)
       Time.now.to_i < (started_at.to_i + limit)
@@ -186,7 +185,7 @@ module Curbit
       rendered = false
       respond_to {|format|
           format.html {
-            render :text => "<html><body>#{message}</body></html>", :status => opts[:status]
+            render :text => message, :status => opts[:status]
             rendered = true
           }
           format.json {

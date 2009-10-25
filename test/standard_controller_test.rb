@@ -61,7 +61,7 @@ class CurbiControllerTest < ActionController::TestCase
           get :index
           ip = @env['HTTP_X_FORWARDED_FOR']
           pfx = Curbit::Controller::CacheKeyPrefix
-          assert_equal "#{pfx}_index_#{ip}", @cache_key
+          assert_equal "#{pfx}_#{TestController.name}_index_#{ip}", @cache_key
         end
       end #context: and the remote client address is...
 
