@@ -16,13 +16,6 @@ class MessageController < ActionController::Base
                      :wait_time => 2.minute,
                      :message => :limit_message
 
-  def show
-    render :text => 'show action'
-  end
-
-  rate_limit :show, :max_calls => 2,
-                     :time_limit => 30.seconds,
-                     :wait_time => 2.minute
   protected
 
   def limit_message(wait_time)
@@ -52,7 +45,6 @@ class MessageControllerTest < ActionController::TestCase
                      }
       Rails.cache.stubs(:read).returns(cache_value)
       Rails.cache.stubs(:write)
-      @request.headers['Content-Type'] = "application/json"
     }
     context "symbol" do
       context "for a json request format, it" do
