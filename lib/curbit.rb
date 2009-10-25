@@ -204,7 +204,3 @@ module Curbit
 
   end
 end
-
-class ActionController::Base
-  include Curbit::Controller
-end
