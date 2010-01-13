@@ -65,6 +65,24 @@ instance as an argument.
 because the Proc is not bound to the controller instance when it's
 defined.  This way, you can at least have access to stuff you might need.)
 
+=== Conditional rate limiting
+
+You may want to apply rate limiting only in certain conditions, for example, if 
+a user is authenticated.  Curbit provides the :if and :unless parameters that 
+both accept a symbol or Proc.  If a symbol is passed then Curbit attempts 
+to execute a method using the symbol as the method name.  In the case of the :if parameter, 
+the rate limit is applied if the method returns true.  For the :unless paramter, the rate 
+limit is not applied if the method returns true.
+
+    rate_limit :invite, 
+               :max_calls => 2,  
+               :time_limit => 30.seconds, 
+               :wait_time => 1.minute,
+               :unless => :logged_in?
+
+In this case, the rate limiting is being used with the acts_as_authenticated method logged_in?
+so that the rate limiting is only applied if the user is not logged in.
+
 === Custom message
 
 You might like to customize the messages returned by CurbIt.

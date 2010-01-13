@@ -20,6 +20,8 @@ module Curbit
       # * +wait_time+ - The time to wait if :max_calls has been reached before being able to pass.
       # * +message+ - The message to render to the client if the call is being limited.  The message will be rendered as a correspondingly formatted response with a default status if given a String.  If the argument is a symbol, a method with the same name will be invoked with the specified wait_time (in seconds).  The called method should take care of rendering the response.
       # * +status+ - The response status to set when the call is being limited.
+      # * +if+ - A symbol representing a method or Proc that returns true if the rate limiting should be applied.
+      # * +unless+ - A symbol representing a method or Proc that returns true if the rate limiting should NOT be applied.
       #
       # ==== Examples
       # 
@@ -64,6 +66,9 @@ module Curbit
       def rate_limit_opts_valid?(opts = {})
         new_opts = {:status => 503}.merge! opts
         opts.merge! new_opts
+        if opts.key?(:if) and opts.key?(:unless)
+          raise ":unless and :if are mutually exclusive parameters"
+        end
         if !opts.key?(:max_calls) or !opts.key?(:time_limit) or !opts.key?(:wait_time)
           raise ":max_calls, :time_limit, and :wait_time are required parameters"
         end
@@ -80,7 +85,28 @@ module Curbit
       "#{CacheKeyPrefix}_#{self.class.name}_#{method}_#{key}"
     end
 
+    def rate_limit_conditional(opts)
+      if opts.key?(:unless)
+       if opts[:unless].is_a? Proc
+         return true if opts[:unless].call(self)
+       elsif opts[:unless].is_a? Symbol
+         return true if self.send(opts[:unless])
+        end
+      end
+      if opts.key?(:if)
+       if opts[:if].is_a? Proc
+         return true unless opts[:if].call(self)
+       elsif opts[:if].is_a? Symbol
+         return true unless self.send(opts[:if])
+        end
+      end
+      return false
+    end
+
     def rate_limit_filter(method, opts)
+
+      return true if rate_limit_conditional(opts)
+
       key = get_key(opts[:key])
       unless (key)
         return true
