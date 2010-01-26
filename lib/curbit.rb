@@ -123,6 +123,8 @@ module Curbit
         val[:count] = count + 1
         started_waiting = val[:started_waiting]
 
+        # did we start making the user wait before being allowed to make
+        # another call?
         if started_waiting
           # did we exceed the wait time?
           if Time.now.to_i > (started_waiting.to_i + opts[:wait_time])
