@@ -86,11 +86,16 @@ class CurbiControllerTest < ActionController::TestCase
       }
       context "and max calls has been exceeded for the current time limit" do
         setup {
+          # emulate the state needed to indicate that we've started
+          # waiting on calls
           cache_value = {:started => Time.now.to_i - 15.seconds,
                          :count => 1
                          }
           Rails.cache.stubs(:read).returns(cache_value)
-          Rails.cache.stubs(:write)
+          Rails.cache.stubs(:write).with() {|key, val, duration|
+            cache_value[:count] = val[:count]
+            true;
+          }
         }
         context ", the call" do
           should "be blocked" do
