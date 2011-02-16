@@ -75,9 +75,20 @@ module Curbit
         true
       end
     end
-
-
-    private 
+    
+    private
+    
+    def write_to_curbit_cache(cache_key, value, options = {})
+      Rails.cache.write(cache_key, value, options)
+    end
+    
+    def read_from_curbit_cache(cache_key)
+      Rails.cache.read(cache_key)
+    end
+    
+    def delete_from_curbit_cache(cache_key)
+      Rails.cache.delete(cache_key)
+    end
 
     def curbit_cache_key(key, method)
       # TODO: this won't work if there are more than one controller with
@@ -114,7 +125,7 @@ module Curbit
 
       cache_key = curbit_cache_key(key, method)
 
-      val = Rails.cache.read(cache_key)
+      val = read_from_curbit_cache(cache_key)
 
       if (val)
         val = val.dup
@@ -128,7 +139,7 @@ module Curbit
         if started_waiting
           # did we exceed the wait time?
           if Time.now.to_i > (started_waiting.to_i + opts[:wait_time])
-            Rails.cache.delete(cache_key)
+            delete_from_curbit_cache(cache_key)
             return true
           else
             get_message(opts)
@@ -139,25 +150,25 @@ module Curbit
           if val[:count] > opts[:max_calls]
             # start waiting and render the message
             val[:started_waiting] = Time.now
-            Rails.cache.write(cache_key, val, :expires_in => opts[:wait_time])
+            write_to_curbit_cache(cache_key, val, :expires_in => opts[:wait_time])
 
             get_message(opts)
 
             return false
           else
             # just update the count
-            Rails.cache.write(cache_key, val, :expires_in => opts[:wait_time])
+            write_to_curbit_cache(cache_key, val, :expires_in => opts[:wait_time])
             return true
           end
         else
           # we exceeded the time limit, so just reset
           val = {:started => Time.now, :count => 1}
-          Rails.cache.write(cache_key, val, :expires_in => opts[:time_limit])
+          write_to_curbit_cache(cache_key, val, :expires_in => opts[:time_limit])
           return true
         end
       else
         val = {:started => Time.now, :count => 1}
-        Rails.cache.write(cache_key, val, :expires_in => opts[:time_limit])
+        write_to_curbit_cache(cache_key, val, :expires_in => opts[:time_limit])
       end
     end
 
