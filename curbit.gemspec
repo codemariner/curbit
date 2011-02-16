@@ -32,7 +32,7 @@ Gem::Specification.new do |s|
     "test/test_helper.rb",
     "test/test_rails_helper.rb"
   ]
-  s.homepage = %q{http://github.com/ssayles/curbit}
+  s.homepage = %q{http://github.com/codemariner/curbit}
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Rate limiting for Rails action controllers.}

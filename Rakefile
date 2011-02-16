@@ -8,7 +8,7 @@ begin
     gem.summary = %Q{Rate limiting for Rails action controllers.}
     gem.description = %Q{Rate limiting for Rails action controllers.}
     gem.email = "ssayles@users.sourceforge.net"
-    gem.homepage = "http://github.com/ssayles/curbit"
+    gem.homepage = "http://github.com/codemariner/curbit"
     gem.authors = ["Scott Sayles"]
     gem.add_development_dependency "thoughtbot-shoulda"
   end
